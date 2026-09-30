@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ふるさと納税 上限額 計算（副業・個人事業主・年金受給者）【2026年】</title>
+<meta name="description" content="副業がある会社員、個人事業主・フリーランス、年金を受け取っている人向けのふるさと納税上限額シミュレーション。給与・事業所得・年金・雑所得を組み合わせて、自己負担2,000円で寄付できる上限額を計算します。">
+<link rel="canonical" href="https://harryquad.github.io/furusato/fukugyo/">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="site-header"><div><a href="/furusato/">ふるさと納税 かんたん計算</a></div></header>
+<div class="wrap">
+  <h1>ふるさと納税 上限額 計算（副業・個人事業主・年金）</h1>
+  <p class="lead"><strong>副業がある会社員</strong>、<strong>個人事業主・フリーランス</strong>、<strong>年金を受け取っている人</strong>向けの上限額シミュレーションです。収入の種類ごとに入力して、自己負担2,000円で寄付できる上限額を計算します。</p>
+
+  <div class="card">
+    <h2>収入・所得（2026年1〜12月）</h2>
+    <div class="row">
+      <div class="field"><label for="salary">給与収入（額面）</label><input type="number" id="salary" min="0" value="0">
+        <div class="hint">万円単位。会社員・パートの給料（ボーナス込み）</div></div>
+      <div class="field"><label for="business">事業所得</label><input type="number" id="business" min="0" value="400">
+        <div class="hint">万円単位。売上 − 経費 − 青色申告特別控除</div></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="other">副業などの雑所得</label><input type="number" id="other" min="0" value="0">
+        <div class="hint">万円単位。副業の収入 − 経費</div></div>
+      <div class="field"><label for="pension">公的年金の収入（額面）</label><input type="number" id="pension" min="0" value="0">
+        <div class="hint">万円単位。老齢年金・企業年金など</div></div>
+    </div>
+    <div class="field" id="ageField">
+      <label for="age">年齢（2026年12月31日時点）</label>
+      <select id="age">
+        <option value="u40">39歳以下</option>
+        <option value="40">40〜64歳</option>
+        <option value="65">65歳以上</option>
+      </select>
+    </div>
+    <h2 style="margin-top:8px">控除</h2>
+    <div class="row">
+      <div class="field"><label for="social">社会保険料（年額）</label><input type="number" id="social" min="0" placeholder="例：600000">
+        <div class="hint">円単位。国民健康保険・国民年金・介護保険などの合計。給与だけの人は空欄でも目安を計算します</div></div>
+      <div class="field"><label for="ideco">iDeCo・小規模企業共済の掛金（年額）</label><input type="number" id="ideco" min="0" value="0">
+        <div class="hint">円単位</div></div>
+    </div>
+    <div class="field">
+      <div class="checks"><label><input type="checkbox" id="spouse">配偶者控除の対象になる配偶者がいる</label></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="general">扶養している16〜18歳・23歳以上の家族</label><input type="number" id="general" min="0" max="10" value="0"></div>
+      <div class="field"><label for="tokutei">扶養している19〜22歳の家族</label><input type="number" id="tokutei" min="0" max="10" value="0"></div>
+    </div>
+    <button id="calc">上限額を計算する</button>
+  </div>
+
+  <div class="card" id="result" hidden></div>
+
+  <div class="ad">広告スペース</div>
+
+  <div class="card faq">
+    <h2>よくある質問</h2>
+    <h3>個人事業主の「所得」とは？</h3>
+    <p>売上から必要経費を引き、さらに青色申告特別控除（最大65万円）を引いた金額です。確定申告書の「事業所得」の欄の金額にあたります。去年の確定申告書を参考に、今年の見込みを入れてください。</p>
+    <h3>副業があると上限額は増える？</h3>
+    <p>副業の所得が増えると住民税も増えるため、上限額も増えます。ただし副業の所得が20万円を超えると確定申告が必要になり、ワンストップ特例は使えなくなります。</p>
+    <h3>年金暮らしでもふるさと納税はできる？</h3>
+    <p>住民税（所得割）がかかっている人ならできます。65歳以上で年金収入だけの場合、収入が少ないと住民税がかからず、ふるさと納税をしても控除が受けられないので注意しましょう。</p>
+    <h3>社会保険料はどこでわかる？</h3>
+    <p>個人事業主は、国民健康保険料と国民年金保険料の1年分の合計です。確定申告書の「社会保険料控除」の欄や、市区町村から届く納付通知書で確認できます。</p>
+  </div>
+
+  <div class="card" id="related"></div>
+
+  <footer>令和8年（2026年）分の所得税・令和9年度分の住民税をもとにした概算です。公的年金以外の所得が1,000万円を超える場合や、分離課税の所得（株式・不動産の譲渡など）がある場合は計算方法が異なります。</footer>
+</div>
+
+<script src="../assets/site.js"></script>
+<script src="../assets/furusato.js"></script>
+<script>
+const num = id => Math.max(0, Number(document.getElementById(id).value) || 0);
+function calc() {
+  const out = document.getElementById("result");
+  out.hidden = false;
+  const man = id => num(id) * 10000;
+  const salary = man("salary"), business = man("business"), other = man("other"), pension = man("pension");
+  const age = document.getElementById("age").value;
+  if (!salary && !business && !other && !pension) { out.innerHTML = '<p class="err">収入・所得を入力してください。</p>'; return; }
+  const socialIn = num("social");
+  const needSocial = !socialIn && (business || other || pension);
+  const r = furusatoLimitDetail({
+    salary, business, other, pension, over65: age === "65", over40: age !== "u40",
+    spouse: document.getElementById("spouse").checked,
+    general: Math.floor(num("general")), tokutei: Math.floor(num("tokutei")),
+    social: socialIn, ideco: num("ideco"),
+  });
+  if (!r.limit) {
+    out.innerHTML = '<p class="err">この条件では住民税（所得割）がかからないため、ふるさと納税をしても税金は戻りません。</p>' +
+      (needSocial ? '<p class="note">社会保険料を入力していない場合、実際より多めに計算されています。</p>' : "");
+    return;
+  }
+  const safe = Math.floor(r.limit * 0.9 / 1000) * 1000;
+  // 確定申告が必要になる代表的なケース（給与と年金の両方がある場合などは判定ツールで確認してもらう）
+  const mustFile = business > 0 || other > 200000 || salary > 20000000 || pension > 4000000;
+  const unsure = !mustFile && salary > 0 && pension > 0;
+  out.innerHTML = `
+    <div class="big">
+      <div class="stat good"><div class="k">寄付の上限額（目安）</div><div class="v">${yen(r.limit)}</div></div>
+      <div class="stat"><div class="k">余裕をもった目安（9割）</div><div class="v">${yen(safe)}</div></div>
+      <div class="stat"><div class="k">控除の受け方</div><div class="v">${mustFile ? "確定申告" : unsure ? "要確認" : "ワンストップ特例も可"}</div></div>
+    </div>
+    ${needSocial ? '<p class="err">社会保険料が未入力のため、社会保険料0円として計算しています。国民健康保険・国民年金などを払っている場合は入力してください（入力すると上限額は下がります）。</p>' : ""}
+    <table class="info">
+      <tr><td>合計所得金額（所得税）</td><td class="num">${yen(r.incomeIT)}</td></tr>
+      <tr><td>社会保険料</td><td class="num">${yen(r.social)}</td></tr>
+      <tr><td>所得税の課税所得</td><td class="num">${yen(r.taxableIT)}</td></tr>
+      <tr><td>所得税率</td><td class="num">${Math.round(r.rate * 100)}%</td></tr>
+      <tr><td>住民税（所得割）</td><td class="num">${yen(r.shotokuwari)}</td></tr>
+    </table>
+    ${mustFile ? '<p class="note">事業所得や20万円を超える副業所得などがあるため、確定申告が必要です。ふるさと納税も確定申告で「寄附金控除」として申告します（ワンストップ特例は使えません）。</p>' : ""}
+    ${unsure ? '<p class="note">給与と年金の両方がある場合、所得の額によって確定申告が必要かどうかが変わります → <a href="/furusato/onestop/">ワンストップ特例の判定</a></p>' : ""}
+    <p class="note">寄付したら → <a href="/furusato/kanri/">寄付の管理・残り枠チェック</a></p>`;
+  try { localStorage.setItem("furusato-limit", String(r.limit)); } catch {}
+  out.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+document.getElementById("calc").addEventListener("click", calc);
+</script>
+</body>
+</html>

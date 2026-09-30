@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ふるさと納税 上限ぴったり 組み合わせツール｜残り枠を無駄なく使い切る</title>
+<meta name="description" content="上限額（残り枠）と気になる返礼品の寄付額を入れるだけで、上限を超えずにいちばん近くなる組み合わせを自動で計算。欲しい度合いも考えて、ふるさと納税の枠を無駄なく使い切れる無料ツールです。">
+<link rel="canonical" href="https://harryquad.github.io/furusato/kumiawase/">
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+.cand{display:grid;grid-template-columns:1fr 110px 110px 36px;gap:8px;align-items:center;margin-bottom:8px}
+.cand input,.cand select{padding:8px}
+.cand button{width:auto;padding:6px 10px;font-size:.8rem;font-weight:500;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+@media (max-width:520px){.cand{grid-template-columns:1fr 90px;}.cand .pr{grid-column:1}}
+.chosen td{background:var(--good-soft);font-weight:700}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+</style>
+</head>
+<body>
+<header class="site-header"><div><a href="/furusato/">ふるさと納税 かんたん計算</a></div></header>
+<div class="wrap">
+  <h1>ふるさと納税 上限ぴったり 組み合わせツール</h1>
+  <p class="lead">上限額（残り枠）と、気になる返礼品の寄付額を入れると、<strong>上限を超えずにいちばん近くなる組み合わせ</strong>を自動で探します。枠を余らせず、超えずに使い切りたいときに便利です。</p>
+
+  <div class="card">
+    <div class="field">
+      <label for="budget">使える金額（上限額 − すでに寄付した額）</label>
+      <input type="number" id="budget" min="0" value="50000">
+      <div class="hint">円単位。<a href="/furusato/kanri/">寄付の管理</a> に記録がある場合は、残り枠が自動で入ります</div>
+    </div>
+    <label>候補の返礼品</label>
+    <div class="hint" style="margin-bottom:8px">名前・寄付額・欲しさ（同じ金額になる組み合わせが複数あるときに、欲しさの合計が大きい方を選びます）</div>
+    <div id="cands"></div>
+    <div class="btns">
+      <button id="add" class="sub">候補を追加</button>
+      <button id="calc">組み合わせを探す</button>
+    </div>
+  </div>
+
+  <div class="card" id="result" hidden></div>
+
+  <div class="ad">広告スペース</div>
+
+  <div class="card faq">
+    <h2>よくある質問</h2>
+    <h3>上限額ぴったりまで使っても大丈夫？</h3>
+    <p>上限額は年収などの見込みから計算した目安なので、ぴったりまで使うと、年収が見込みより少なかったときに自己負担が増えることがあります。上限額の9割程度を「使える金額」として入れておくと安心です。</p>
+    <h3>同じ返礼品を2つ選びたいときは？</h3>
+    <p>同じ返礼品を2回まで選んでもいい場合は、候補に同じものを2行入れてください。</p>
+  </div>
+
+  <div class="card" id="related"></div>
+
+  <footer>入力した寄付額の組み合わせを計算するツールです。実際の寄付額や在庫は各サイトでご確認ください。</footer>
+</div>
+
+<script src="../assets/site.js"></script>
+<script>
+const cands = document.getElementById("cands");
+function addCand(name = "", amount = "", pr = "2") {
+  const el = document.createElement("div");
+  el.className = "cand";
+  el.innerHTML = `<input type="text" class="n" placeholder="返礼品の名前" aria-label="返礼品の名前">
+    <input type="number" class="a" min="0" placeholder="寄付額" aria-label="寄付額">
+    <select class="pr" aria-label="欲しさ"><option value="3">とても欲しい</option><option value="2">欲しい</option><option value="1">あれば</option></select>
+    <button type="button" aria-label="削除">×</button>`;
+  el.querySelector(".n").value = name;
+  el.querySelector(".a").value = amount;
+  el.querySelector(".pr").value = pr;
+  el.querySelector("button").addEventListener("click", () => el.remove());
+  cands.appendChild(el);
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+
+// 予算以下で合計額が最大、同額なら欲しさの合計が最大になる組み合わせ（動的計画法）
+function solve(items, budget) {
+  const g = items.reduce((x, it) => gcd(x, it.amount), budget) || 1;
+  const cap = Math.floor(budget / g);
+  const best = new Int32Array(cap + 1).fill(-1);  // 欲しさの合計（-1は到達不可）
+  const from = Array.from({ length: items.length }, () => new Uint8Array(cap + 1));
+  best[0] = 0;
+  items.forEach((it, i) => {
+    const w = it.amount / g;
+    for (let s = cap; s >= w; s--) {
+      if (best[s - w] < 0) continue;
+      const v = best[s - w] + it.pr;
+      if (v > best[s]) { best[s] = v; from[i][s] = 1; }
+    }
+  });
+  let s = cap;
+  while (s > 0 && best[s] < 0) s--;
+  // 復元
+  const chosen = new Set();
+  for (let i = items.length - 1; i >= 0 && s > 0; i--) {
+    if (from[i][s]) { chosen.add(i); s -= items[i].amount / g; }
+  }
+  return chosen;
+}
+
+function calc() {
+  const out = document.getElementById("result");
+  out.hidden = false;
+  const budget = Math.floor(Number(document.getElementById("budget").value) || 0);
+  const items = [...cands.querySelectorAll(".cand")].map((el, i) => ({
+    name: el.querySelector(".n").value.trim() || `候補 ${i + 1}`,
+    amount: Math.floor(Number(el.querySelector(".a").value) || 0),
+    pr: Number(el.querySelector(".pr").value),
+  })).filter(it => it.amount > 0);
+  if (!budget || !items.length) { out.innerHTML = '<p class="err">使える金額と、寄付額を入れた候補を1つ以上入力してください。</p>'; return; }
+  if (items.length > 40) { out.innerHTML = '<p class="err">候補は40個までにしてください。</p>'; return; }
+  const chosen = solve(items, budget);
+  const total = [...chosen].reduce((s, i) => s + items[i].amount, 0);
+  out.innerHTML = chosen.size ? `
+    <div class="big">
+      <div class="stat good"><div class="k">組み合わせの合計</div><div class="v">${yen(total)}</div></div>
+      <div class="stat"><div class="k">残る金額</div><div class="v">${yen(budget - total)}</div></div>
+      <div class="stat"><div class="k">選んだ返礼品</div><div class="v">${chosen.size}個</div></div>
+    </div>
+    <table class="info">
+      <tr><th>返礼品</th><th class="num">寄付額</th><th></th></tr>
+      ${items.map((it, i) => `<tr class="${chosen.has(i) ? "chosen" : ""}"><td>${esc(it.name)}</td><td class="num">${yen(it.amount)}</td><td>${chosen.has(i) ? "✓ 選択" : ""}</td></tr>`).join("")}
+    </table>
+    ${budget - total > 0 ? `<p class="note">残りの ${yen(budget - total)} は、この金額以下の返礼品を探すか、来年に回すのもありです。</p>` : ""}`
+    : '<p class="err">使える金額に収まる候補がありません。</p>';
+  out.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+// 寄付の管理ページの記録があれば、残り枠を初期値にする
+try {
+  const limit = Number(localStorage.getItem("furusato-limit")) || 0;
+  const done = JSON.parse(localStorage.getItem("furusato-donations") || "[]").reduce((s, d) => s + (d.amount || 0), 0);
+  if (limit) document.getElementById("budget").value = Math.max(0, limit - done);
+} catch {}
+document.getElementById("add").addEventListener("click", () => addCand());
+document.getElementById("calc").addEventListener("click", calc);
+addCand("お米 10kg", 14000, "3");
+addCand("牛肉 1kg", 13000, "2");
+addCand("いくら 500g", 20000, "3");
+addCand("フルーツ", 10000, "1");
+addCand("ビール 24本", 17000, "2");
+</script>
+</body>
+</html>

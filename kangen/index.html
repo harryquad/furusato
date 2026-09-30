@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ふるさと納税 還元率・コスパ比較ツール｜返礼品の量あたり寄付額を計算</title>
+<meta name="description" content="気になる返礼品の寄付額・内容量・市場価格を入れるだけで、還元率と「1kgあたり・1個あたりの寄付額」を計算して比較。お肉・お米・海産物などのコスパの良い返礼品選びに使える無料ツールです。">
+<link rel="canonical" href="https://harryquad.github.io/furusato/kangen/">
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+.items{display:grid;gap:12px}
+.item{border:1px solid var(--line);border-radius:12px;padding:12px}
+.item .row{gap:10px}
+.item .field{margin-bottom:10px}
+.item .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:600}
+.item .head button{width:auto;padding:4px 10px;font-size:.8rem;font-weight:500;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media (max-width:520px){.row3{grid-template-columns:1fr 1fr}}
+.best td{background:var(--good-soft);font-weight:700}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+</style>
+</head>
+<body>
+<header class="site-header"><div><a href="/furusato/">ふるさと納税 かんたん計算</a></div></header>
+<div class="wrap">
+  <h1>ふるさと納税 還元率・コスパ比較ツール</h1>
+  <p class="lead">気になる返礼品を並べて、<strong>還元率</strong>（寄付額に対して、どれくらいの価値のものがもらえるか）と、<strong>1kgあたり・1個あたりの寄付額</strong>を比べます。同じジャンルの返礼品のどれがお得かがすぐわかります。</p>
+
+  <div class="card">
+    <div class="field" style="max-width:260px">
+      <label for="unit">量の単位</label>
+      <select id="unit">
+        <option value="kg">kg（お肉・お米・海産物など）</option>
+        <option value="個">個・本・枚</option>
+        <option value="L">L（飲み物など）</option>
+        <option value="回">回（体験・サービスなど）</option>
+      </select>
+    </div>
+    <div class="items" id="items"></div>
+    <div class="btns">
+      <button id="addItem" class="sub">返礼品を追加</button>
+      <button id="calc">比較する</button>
+    </div>
+  </div>
+
+  <div class="card" id="result" hidden></div>
+
+  <div class="ad">広告スペース</div>
+
+  <div class="card faq">
+    <h2>還元率についてよくある質問</h2>
+    <h3>還元率とは？</h3>
+    <p>寄付額に対して、返礼品が市場でいくらくらいの価値があるかの割合です。たとえば1万円の寄付で3,000円相当の品物がもらえるなら還元率は30%です。ルール上、返礼品の調達費用は寄付額の3割以下と決められています。</p>
+    <h3>市場価格がわからない場合は？</h3>
+    <p>市場価格は空欄のままでも、「1kgあたりの寄付額」で比べられます。同じ種類の返礼品なら、量あたりの寄付額が少ないほどお得です。スーパーや通販での同じくらいの品質の値段を参考に入れると、還元率も出せます。</p>
+    <h3>返礼品に税金はかかる？</h3>
+    <p>返礼品の価値は「一時所得」にあたりますが、一時所得には年50万円の特別控除があるので、ほかに一時所得（懸賞の賞金・保険の満期金など）がなければ、ふつうは税金はかかりません。</p>
+  </div>
+
+  <div class="card" id="related"></div>
+
+  <footer>入力した値にもとづく計算です。返礼品の価値の感じ方は人それぞれなので、量や価格だけでなく品質や配送時期もあわせて選んでください。</footer>
+</div>
+
+<script src="../assets/site.js"></script>
+<script>
+const box = document.getElementById("items");
+let count = 0;
+function addItem(v = {}) {
+  count++;
+  const el = document.createElement("div");
+  el.className = "item";
+  el.innerHTML = `
+    <div class="head"><span>返礼品 ${count}</span><button type="button" class="rm">削除</button></div>
+    <div class="field"><input type="text" class="name" placeholder="名前（例：〇〇町 牛切り落とし）" value="${v.name || ""}"></div>
+    <div class="row3">
+      <div class="field"><label>寄付額（円）</label><input type="number" class="donation" min="0" value="${v.donation || ""}"></div>
+      <div class="field"><label>量（<span class="u"></span>）</label><input type="number" class="amount" min="0" step="0.01" value="${v.amount || ""}"></div>
+      <div class="field"><label>市場価格（任意・円）</label><input type="number" class="price" min="0" value="${v.price || ""}"></div>
+    </div>`;
+  el.querySelector(".rm").addEventListener("click", () => { el.remove(); });
+  box.appendChild(el);
+  updateUnit();
+}
+function updateUnit() {
+  const u = document.getElementById("unit").value;
+  box.querySelectorAll(".u").forEach(s => (s.textContent = u));
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function calc() {
+  const out = document.getElementById("result");
+  out.hidden = false;
+  const u = document.getElementById("unit").value;
+  const rows = [...box.querySelectorAll(".item")].map((el, i) => {
+    const g = c => Number(el.querySelector(c).value) || 0;
+    return { name: el.querySelector(".name").value.trim() || `返礼品 ${i + 1}`, donation: g(".donation"), amount: g(".amount"), price: g(".price") };
+  }).filter(r => r.donation > 0 && r.amount > 0);
+  if (rows.length === 0) { out.innerHTML = '<p class="err">寄付額と量を入力した返礼品が1つ以上必要です。</p>'; return; }
+  rows.forEach(r => { r.perUnit = r.donation / r.amount; r.rate = r.price ? r.price / r.donation * 100 : null; });
+  rows.sort((a, b) => a.perUnit - b.perUnit);
+  const best = rows[0];
+  out.innerHTML = `
+    <h2>比較結果（量あたりの寄付額が少ない順）</h2>
+    <div style="overflow-x:auto"><table class="info">
+      <tr><th>返礼品</th><th class="num">寄付額</th><th class="num">1${u}あたりの寄付額</th><th class="num">還元率</th></tr>
+      ${rows.map(r => `<tr class="${r === best ? "best" : ""}"><td>${esc(r.name)}</td><td class="num">${yen(r.donation)}</td><td class="num">${yen(r.perUnit)}</td><td class="num">${r.rate === null ? "—" : r.rate.toFixed(1) + "%"}</td></tr>`).join("")}
+    </table></div>
+    ${rows.length > 1 ? `<p class="note">量あたりでいちばんお得なのは「${esc(best.name)}」です。いちばん高いものと比べて、1${u}あたり ${yen(rows[rows.length - 1].perUnit - best.perUnit)} 少ない寄付額で受け取れます。</p>` : ""}
+    <p class="note">寄付する前に、上限額の残りを確認しておきましょう → <a href="/furusato/kanri/">寄付の管理・残り枠チェック</a></p>`;
+  out.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+document.getElementById("unit").addEventListener("change", updateUnit);
+document.getElementById("addItem").addEventListener("click", () => addItem());
+document.getElementById("calc").addEventListener("click", calc);
+addItem({ name: "A町 牛切り落とし", donation: 10000, amount: 1.2, price: 3000 });
+addItem({ name: "B市 牛切り落とし", donation: 12000, amount: 1.5 });
+addItem();
+</script>
+</body>
+</html>

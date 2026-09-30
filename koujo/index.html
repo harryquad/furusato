@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ふるさと納税 控除額 計算｜所得税の還付と住民税の減額はいくら？いつ？</title>
+<meta name="description" content="寄付額と年収を入れるだけで、ふるさと納税で所得税がいくら戻り、住民税がいくら安くなるかを内訳つきで計算。ワンストップ特例と確定申告の違い、住民税決定通知書での確認方法もわかる無料ツールです。">
+<link rel="canonical" href="https://harryquad.github.io/furusato/koujo/">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="site-header"><div><a href="/furusato/">ふるさと納税 かんたん計算</a></div></header>
+<div class="wrap">
+  <h1>ふるさと納税 控除額 計算（所得税の還付・住民税の減額）</h1>
+  <p class="lead">寄付した金額が、<strong>所得税でいくら戻り</strong>、<strong>住民税でいくら安くなるか</strong>を内訳つきで計算します。「ちゃんと控除されているか」を住民税決定通知書で確かめるときにも使えます。</p>
+
+  <div class="card">
+    <div class="row">
+      <div class="field"><label for="donation">寄付した金額の合計</label><input type="number" id="donation" min="0" value="50000">
+        <div class="hint">円単位（2026年1〜12月の寄付の合計）</div></div>
+      <div class="field"><label for="annual">年収（額面・ボーナス込み）</label><input type="number" id="annual" min="0" value="500">
+        <div class="hint">万円単位</div></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="age">年齢</label>
+        <select id="age"><option value="u40">39歳以下</option><option value="40">40〜64歳</option></select></div>
+      <div class="field"><label for="method">控除の受け方</label>
+        <select id="method"><option value="onestop">ワンストップ特例</option><option value="shinkoku">確定申告</option></select></div>
+    </div>
+    <div class="field">
+      <div class="checks"><label><input type="checkbox" id="spouse">配偶者控除の対象になる配偶者がいる</label></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="general">扶養している16〜18歳・23歳以上の家族</label><input type="number" id="general" min="0" max="10" value="0"></div>
+      <div class="field"><label for="tokutei">扶養している19〜22歳の家族</label><input type="number" id="tokutei" min="0" max="10" value="0"></div>
+    </div>
+    <button id="calc">控除額を計算する</button>
+  </div>
+
+  <div class="card" id="result" hidden></div>
+
+  <div class="ad">広告スペース</div>
+
+  <div class="card faq">
+    <h2>控除のしくみ</h2>
+    <h3>控除は3つに分かれる</h3>
+    <p>「寄付額 − 2,000円」が、①所得税の控除（寄付した年の所得税）、②住民税の基本分（10%）、③住民税の特例分（残り全部）の3つに分かれて差し引かれます。上限額の範囲内なら、合計で「寄付額 − 2,000円」がまるごと戻ってくる仕組みです。</p>
+    <h3>ワンストップ特例だと所得税は戻らない？</h3>
+    <p>ワンストップ特例では、所得税で控除される分も含めて、すべて翌年度の住民税から差し引かれます。確定申告の場合は、所得税分が還付金として振り込まれ、残りが住民税から差し引かれます。どちらでも合計の金額はほぼ同じです。</p>
+    <h3>住民税決定通知書のどこを見ればいい？</h3>
+    <p>毎年5〜6月に会社から配られる（または自宅に届く）住民税の決定通知書の「税額控除額」または「寄附金税額控除」の欄を見ます。市区町村民税と道府県民税に分かれて書かれていることが多いので、両方を足した金額を、このツールの「住民税から差し引かれる額」と比べてください。</p>
+  </div>
+
+  <div class="card" id="related"></div>
+
+  <footer>令和8年（2026年）分の所得税・令和9年度分の住民税をもとにした、会社員の場合の概算です。住民税の控除額は、市区町村民税と道府県民税で端数の処理が分かれるため、数円ずれることがあります。</footer>
+</div>
+
+<script src="../assets/site.js"></script>
+<script src="../assets/furusato.js"></script>
+<script>
+const num = id => Math.max(0, Number(document.getElementById(id).value) || 0);
+function calc() {
+  const out = document.getElementById("result");
+  out.hidden = false;
+  const donation = Math.floor(num("donation"));
+  const annual = num("annual") * 10000;
+  if (!donation || !annual) { out.innerHTML = '<p class="err">寄付額と年収を入力してください。</p>'; return; }
+  const r = furusatoLimit({
+    annual, over40: document.getElementById("age").value === "40",
+    spouse: document.getElementById("spouse").checked,
+    general: Math.floor(num("general")), tokutei: Math.floor(num("tokutei")), social: 0, ideco: 0,
+  });
+  const b = deductionBreakdown(donation, r);
+  const onestop = document.getElementById("method").value === "onestop";
+  const resident = onestop ? b.total : b.residentBasic + b.residentSpecial;
+  const over = donation > r.limit;
+
+  out.innerHTML = `
+    <div class="big">
+      <div class="stat good"><div class="k">戻ってくる合計（控除額）</div><div class="v">${yen(b.total)}</div></div>
+      <div class="stat ${over ? "warn" : ""}"><div class="k">実質の自己負担</div><div class="v">${yen(b.burden)}</div></div>
+      <div class="stat"><div class="k">あなたの上限額（目安）</div><div class="v">${yen(r.limit)}</div></div>
+    </div>
+    ${over ? `<p class="err">上限額を超えているため、自己負担が2,000円より多くなっています（超えた分は控除されません）。</p>` : ""}
+    <table class="info">
+      <tr><th>内訳</th><th class="num">金額</th><th>いつ・どうやって</th></tr>
+      ${onestop ? `
+      <tr><td>所得税</td><td class="num">0円</td><td>ワンストップ特例では所得税は戻らず、その分も住民税から差し引かれます</td></tr>
+      <tr><td>住民税から差し引かれる額</td><td class="num">${yen(resident)}</td><td>2027年6月〜2028年5月の住民税が、毎月少しずつ安くなります</td></tr>` : `
+      <tr><td>所得税の還付</td><td class="num">${yen(b.incomeTax)}</td><td>確定申告後、1〜2ヶ月で口座に振り込まれます</td></tr>
+      <tr><td>住民税から差し引かれる額</td><td class="num">${yen(resident)}</td><td>2027年6月〜2028年5月の住民税が、毎月少しずつ安くなります</td></tr>`}
+      <tr><td colspan="3"><small style="color:var(--muted)">内訳：所得税分 ${yen(b.incomeTax)}（所得税率${Math.round(r.rate * 100)}%）／ 住民税の基本分 ${yen(b.residentBasic)} ／ 住民税の特例分 ${yen(b.residentSpecial)}</small></td></tr>
+    </table>
+    <p class="note">会社員で住民税が給料から引かれている場合、1ヶ月あたりの住民税がおよそ <strong>${yen(resident / 12)}</strong> 安くなります。</p>`;
+  out.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+document.getElementById("calc").addEventListener("click", calc);
+</script>
+</body>
+</html>
