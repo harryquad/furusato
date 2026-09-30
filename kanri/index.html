@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ふるさと納税 寄付の管理・残り枠チェック｜上限まであといくら？</title>
+<meta name="description" content="ふるさと納税で寄付した記録をつけて、上限額まであといくら寄付できるかをひと目で確認。自治体の数やワンストップ特例の申請状況も管理でき、CSVで書き出せる無料ツールです。登録不要。">
+<link rel="canonical" href="https://harryquad.github.io/furusato/kanri/">
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+.bar{height:14px;background:var(--bg);border-radius:99px;overflow:hidden;margin:8px 0 4px}
+.bar div{height:100%;background:var(--good)}
+.bar div.over{background:var(--err)}
+.list{width:100%;border-collapse:collapse;font-size:.9rem}
+.list th,.list td{padding:8px 4px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+.list th{color:var(--muted);font-weight:500;font-size:.8rem}
+.list td.num{text-align:right;white-space:nowrap}
+.list button{width:auto;padding:4px 10px;font-size:.8rem;font-weight:500;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+</style>
+</head>
+<body>
+<header class="site-header"><div><a href="/furusato/">ふるさと納税 かんたん計算</a></div></header>
+<div class="wrap">
+  <h1>ふるさと納税 寄付の管理・残り枠チェック</h1>
+  <p class="lead">寄付した記録をつけると、<strong>上限額まであといくら寄付できるか</strong>がひと目でわかります。<strong>ワンストップ特例の申請漏れ</strong>も防げます。記録はこのブラウザの中だけに保存され、外部には送られません。</p>
+
+  <div class="card">
+    <div class="field">
+      <label for="limit">あなたの上限額</label>
+      <input type="number" id="limit" min="0" placeholder="例：60000">
+      <div class="hint">円単位。わからない場合は <a href="/furusato/">上限額 計算シミュレーション</a> で計算すると、ここに自動で入ります</div>
+    </div>
+    <div id="summary"></div>
+  </div>
+
+  <div class="card">
+    <h2>寄付を追加する</h2>
+    <div class="row">
+      <div class="field"><label for="date">寄付した日</label><input type="date" id="date"></div>
+      <div class="field"><label for="city">自治体</label><input type="text" id="city" placeholder="例：北海道〇〇町"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="amount">寄付額（円）</label><input type="number" id="amount" min="0" placeholder="例：10000"></div>
+      <div class="field"><label for="item">返礼品（メモ）</label><input type="text" id="item" placeholder="例：いくら 500g"></div>
+    </div>
+    <button id="add">追加する</button>
+  </div>
+
+  <div class="card">
+    <h2>寄付の一覧</h2>
+    <div id="list"></div>
+    <div class="btns">
+      <button id="csv" class="sub">CSVで書き出す</button>
+      <button id="clear" class="sub">すべて消去</button>
+    </div>
+  </div>
+
+  <div class="ad">広告スペース</div>
+
+  <div class="card faq">
+    <h2>よくある質問</h2>
+    <h3>記録はどこに保存される？</h3>
+    <p>お使いのブラウザの中（ローカルストレージ）だけに保存されます。サーバーには送られないので、ほかの人に見られることはありません。そのかわり、別のスマホやパソコンでは見られず、ブラウザのデータを消すと記録も消えます。大事な記録はCSVで書き出しておきましょう。</p>
+    <h3>ワンストップ特例の「5自治体」はどう数える？</h3>
+    <p>寄付した自治体の数で数えます。同じ自治体に何回寄付しても1つです。6自治体以上に寄付した場合は、確定申告が必要になります。</p>
+  </div>
+
+  <div class="card" id="related"></div>
+
+  <footer>このツールは記録と計算の補助です。控除の手続きは、寄付した自治体・税務署の案内に従ってください。</footer>
+</div>
+
+<script src="../assets/site.js"></script>
+<script>
+const KEY = "furusato-donations";
+const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch { return []; } };
+const store = list => { try { localStorage.setItem(KEY, JSON.stringify(list)); } catch {} };
+let donations = load();
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const limitEl = document.getElementById("limit");
+try { limitEl.value = localStorage.getItem("furusato-limit") || ""; } catch {}
+
+function render() {
+  const limit = Number(limitEl.value) || 0;
+  const total = donations.reduce((s, d) => s + d.amount, 0);
+  const cities = new Set(donations.map(d => d.city.trim()).filter(Boolean));
+  const pending = donations.filter(d => !d.onestop).length;
+  const pct = limit ? Math.min(100, total / limit * 100) : 0;
+  const over = limit && total > limit;
+  document.getElementById("summary").innerHTML = `
+    <div class="big">
+      <div class="stat"><div class="k">寄付の合計</div><div class="v">${yen(total)}</div></div>
+      <div class="stat ${over ? "warn" : "good"}"><div class="k">${over ? "上限を超えた額" : "あと寄付できる額"}</div><div class="v">${limit ? yen(Math.abs(limit - total)) : "上限額を入力"}</div></div>
+      <div class="stat ${cities.size > 5 ? "warn" : ""}"><div class="k">寄付した自治体</div><div class="v">${cities.size}自治体</div></div>
+    </div>
+    ${limit ? `<div class="bar"><div class="${over ? "over" : ""}" style="width:${pct}%"></div></div><div class="hint">上限額の ${Math.round(total / limit * 100)}% を使っています</div>` : ""}
+    ${over ? '<p class="err">上限額を超えています。超えた分は自己負担になります。</p>' : ""}
+    ${cities.size > 5 ? '<p class="note">6自治体以上に寄付しているため、ワンストップ特例は使えません。確定申告が必要です。</p>' : pending ? `<p class="note">ワンストップ特例を使う場合、未申請の寄付が <strong>${pending}件</strong> あります。申請期限は寄付した翌年の1月10日（必着）です。</p>` : ""}`;
+
+  document.getElementById("list").innerHTML = donations.length ? `
+    <div style="overflow-x:auto"><table class="list">
+      <tr><th>日付</th><th>自治体・返礼品</th><th style="text-align:right">金額</th><th>申請済</th><th></th></tr>
+      ${donations.map((d, i) => `<tr>
+        <td>${esc(d.date || "")}</td>
+        <td>${esc(d.city)}${d.item ? `<br><small style="color:var(--muted)">${esc(d.item)}</small>` : ""}</td>
+        <td class="num">${yen(d.amount)}</td>
+        <td><input type="checkbox" data-i="${i}" class="os" ${d.onestop ? "checked" : ""} aria-label="ワンストップ特例 申請済み"></td>
+        <td><button data-i="${i}" class="del">削除</button></td></tr>`).join("")}
+    </table></div>
+    <p class="hint">「申請済」はワンストップ特例の申請書を送ったらチェックします。</p>` : '<p class="hint">まだ記録がありません。</p>';
+  document.querySelectorAll(".os").forEach(c => c.addEventListener("change", () => { donations[c.dataset.i].onestop = c.checked; store(donations); render(); }));
+  document.querySelectorAll(".del").forEach(b => b.addEventListener("click", () => {
+    if (!confirm("この寄付の記録を削除しますか？")) return;
+    donations.splice(Number(b.dataset.i), 1); store(donations); render();
+  }));
+}
+
+document.getElementById("add").addEventListener("click", () => {
+  const amount = Math.floor(Number(document.getElementById("amount").value) || 0);
+  const city = document.getElementById("city").value.trim();
+  if (!amount || !city) { alert("自治体と寄付額を入力してください。"); return; }
+  donations.push({ date: document.getElementById("date").value, city, amount, item: document.getElementById("item").value.trim(), onestop: false });
+  donations.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+  store(donations);
+  for (const id of ["city", "amount", "item"]) document.getElementById(id).value = "";
+  render();
+});
+limitEl.addEventListener("input", () => { try { localStorage.setItem("furusato-limit", limitEl.value); } catch {} render(); });
+document.getElementById("csv").addEventListener("click", () => {
+  const q = s => `"${String(s).replace(/"/g, '""')}"`;
+  const csv = "﻿日付,自治体,寄付額,返礼品,ワンストップ申請済\n" + donations.map(d => [d.date, q(d.city), d.amount, q(d.item || ""), d.onestop ? "済" : ""].join(",")).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  a.download = "furusato-nouzei.csv";
+  a.click();
+});
+document.getElementById("clear").addEventListener("click", () => {
+  if (!donations.length || !confirm("すべての記録を消去します。元に戻せません。よろしいですか？")) return;
+  donations = []; store(donations); render();
+});
+const now = new Date();
+document.getElementById("date").value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+render();
+</script>
+</body>
+</html>

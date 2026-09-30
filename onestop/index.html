@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ワンストップ特例 使える？判定ツール｜ふるさと納税の確定申告が必要か3秒でチェック</title>
+<meta name="description" content="いくつかの質問に答えるだけで、ふるさと納税でワンストップ特例制度が使えるか、確定申告が必要かを判定。申請期限や必要な書類もあわせて表示する無料ツールです。">
+<link rel="canonical" href="https://harryquad.github.io/furusato/onestop/">
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+.q{padding:12px 0;border-bottom:1px solid var(--line)}
+.q:last-of-type{border-bottom:0}
+.q .t{font-weight:600;margin-bottom:6px}
+.verdict{font-size:1.2rem;font-weight:700;margin:0 0 10px}
+.verdict.ok{color:var(--good)} .verdict.ng{color:var(--warn)}
+</style>
+</head>
+<body>
+<header class="site-header"><div><a href="/furusato/">ふるさと納税 かんたん計算</a></div></header>
+<div class="wrap">
+  <h1>ワンストップ特例 判定ツール</h1>
+  <p class="lead">ふるさと納税の控除を受けるには、<strong>ワンストップ特例</strong>（申請書を送るだけ）か<strong>確定申告</strong>のどちらかが必要です。質問に答えると、あなたがどちらを使えばいいか、期限とあわせて判定します。</p>
+
+  <div class="card" id="form">
+    <div class="q"><div class="t">① 会社員など、年末調整を受けている給与所得者ですか？</div>
+      <div class="checks"><label><input type="radio" name="q1" value="yes" checked>はい</label><label><input type="radio" name="q1" value="no">いいえ（個人事業主・フリーランスなど）</label></div></div>
+    <div class="q"><div class="t">② 2026年の給与収入は2,000万円を超えますか？</div>
+      <div class="checks"><label><input type="radio" name="q2" value="no" checked>いいえ</label><label><input type="radio" name="q2" value="yes">はい</label></div></div>
+    <div class="q"><div class="t">③ 2026年分で、次のどれかのために確定申告をしますか？</div>
+      <div class="checks">
+        <label><input type="checkbox" class="q3">医療費控除（セルフメディケーション税制を含む）</label>
+        <label><input type="checkbox" class="q3">住宅ローン控除の1年目</label>
+        <label><input type="checkbox" class="q3">副業などの所得が20万円を超える</label>
+        <label><input type="checkbox" class="q3">株の損失の繰越など、そのほかの理由</label>
+      </div></div>
+    <div class="q"><div class="t">④ 2026年に寄付する（した）自治体の数は？</div>
+      <div class="checks"><label><input type="radio" name="q4" value="le5" checked>5つ以内</label><label><input type="radio" name="q4" value="gt5">6つ以上</label></div>
+      <div class="hint">同じ自治体に何回寄付しても1つと数えます</div></div>
+    <button id="judge">判定する</button>
+  </div>
+
+  <div class="card" id="result" hidden></div>
+
+  <div class="ad">広告スペース</div>
+
+  <div class="card faq">
+    <h2>ワンストップ特例のよくある質問</h2>
+    <h3>ワンストップ特例とは？</h3>
+    <p>確定申告をしなくても、寄付した自治体に申請書を送るだけで、ふるさと納税の控除が受けられる制度です。控除はすべて翌年度の住民税から差し引かれます（控除される合計額は確定申告と同じです）。</p>
+    <h3>申請の期限は？</h3>
+    <p>寄付した翌年の1月10日（必着）までに、寄付したそれぞれの自治体に申請書を送ります。自治体によってはオンラインで申請できます。</p>
+    <h3>ワンストップ特例を申請したあとに確定申告することになったら？</h3>
+    <p>確定申告をすると、ワンストップ特例の申請は無効になります。その場合は、ワンストップ特例で申請した分も含めて、すべての寄付を確定申告に書く必要があります。</p>
+    <h3>引っ越しや結婚で住所・名前が変わったら？</h3>
+    <p>申請後、翌年1月10日までに住所や名前が変わった場合は、寄付した自治体に「申告事項変更届出書」を出します。</p>
+  </div>
+
+  <div class="card" id="related"></div>
+
+  <footer>一般的なケースの判定です。詳しくは寄付先の自治体や税務署にご確認ください。</footer>
+</div>
+
+<script src="../assets/site.js"></script>
+<script>
+function judge() {
+  const out = document.getElementById("result");
+  out.hidden = false;
+  const v = n => document.querySelector(`input[name=${n}]:checked`).value;
+  const reasons = [];
+  if (v("q1") === "no") reasons.push("年末調整を受けていない（個人事業主などはもともと確定申告が必要）");
+  if (v("q2") === "yes") reasons.push("給与収入が2,000万円を超える（確定申告が必要）");
+  if ([...document.querySelectorAll(".q3")].some(c => c.checked)) reasons.push("ほかの理由で確定申告をする");
+  if (v("q4") === "gt5") reasons.push("寄付先が6自治体以上");
+
+  out.innerHTML = reasons.length === 0 ? `
+    <p class="verdict ok">ワンストップ特例が使えます</p>
+    <table class="info">
+      <tr><td>やること</td><td>寄付した自治体ごとに「寄附金税額控除に係る申告特例申請書」を送る（オンライン申請ができる自治体もあります）</td></tr>
+      <tr><td>期限</td><td><strong>2027年1月10日（必着）</strong></td></tr>
+      <tr><td>必要なもの</td><td>申請書、マイナンバーカードの写し（ない場合は通知カードなど番号がわかるものと、運転免許証などの本人確認書類の写し）</td></tr>
+      <tr><td>控除のされ方</td><td>2027年6月からの住民税が安くなる（所得税の還付はありません）</td></tr>
+    </table>
+    <p class="note">年末（12月）の寄付は申請期限までの時間が短いので、寄付したらすぐに申請しましょう。あとで確定申告をすることになった場合は、ワンストップ特例は無効になり、すべての寄付を確定申告に書く必要があります。</p>` : `
+    <p class="verdict ng">確定申告が必要です</p>
+    <p>理由：</p><ul>${reasons.map(r => `<li>${r}</li>`).join("")}</ul>
+    <table class="info">
+      <tr><td>やること</td><td>確定申告で「寄附金控除」を申告する</td></tr>
+      <tr><td>期限</td><td><strong>2027年3月15日</strong>（還付だけの申告なら2027年1月から出せます）</td></tr>
+      <tr><td>必要なもの</td><td>各自治体の「寄附金受領証明書」、または寄付サイトが発行する「寄附金控除に関する証明書」</td></tr>
+      <tr><td>控除のされ方</td><td>所得税の還付と、2027年6月からの住民税の減額</td></tr>
+    </table>
+    <p class="note">確定申告をする場合、ワンストップ特例の申請書は送らなくて大丈夫です（送っていても確定申告が優先されます）。</p>`;
+  out.innerHTML += `<p class="note">寄付の記録をつけておくと、申請漏れを防げます → <a href="/furusato/kanri/">寄付の管理・残り枠チェック</a></p>`;
+  out.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+document.getElementById("judge").addEventListener("click", judge);
+</script>
+</body>
+</html>

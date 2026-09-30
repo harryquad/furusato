@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ふるさと納税 上限額 計算シミュレーション【2026年】｜年収・家族構成から簡単計算</title>
+<meta name="description" content="年収と家族構成を入れるだけで、ふるさと納税で自己負担2,000円に収まる寄付の上限額を計算。2026年（令和8年）の基礎控除・給与所得控除の引き上げに対応した無料シミュレーションです。">
+<link rel="canonical" href="https://harryquad.github.io/furusato/">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="site-header"><div><a href="/furusato/">ふるさと納税 かんたん計算</a></div></header>
+<div class="wrap">
+  <h1>ふるさと納税 上限額 計算シミュレーション（2026年）</h1>
+  <p class="lead">年収と家族構成を入れると、<strong>自己負担2,000円</strong>で済む<strong>寄付の上限額</strong>を計算します。2026年分の税制改正（基礎控除・給与所得控除の引き上げ）に対応しています。</p>
+
+  <div class="card">
+    <div class="row">
+      <div class="field"><label for="annual">年収（額面・ボーナス込み）</label><input type="number" id="annual" min="0" value="500">
+        <div class="hint">万円単位。2026年1〜12月の見込み額</div></div>
+      <div class="field">
+        <label for="age">年齢</label>
+        <select id="age"><option value="u40">39歳以下</option><option value="40">40〜64歳</option></select>
+      </div>
+    </div>
+    <div class="field">
+      <div class="checks"><label><input type="checkbox" id="spouse">配偶者控除の対象になる配偶者がいる（収入がない、またはパート収入が少ない配偶者）</label></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="general">扶養している16〜18歳・23歳以上の家族</label><input type="number" id="general" min="0" max="10" value="0">
+        <div class="hint">人数（高校生の子、親など）</div></div>
+      <div class="field"><label for="tokutei">扶養している19〜22歳の家族</label><input type="number" id="tokutei" min="0" max="10" value="0">
+        <div class="hint">人数（大学生の子など）。15歳以下の子は数えません</div></div>
+    </div>
+    <details class="field">
+      <summary>もっと正確に計算する（任意）</summary>
+      <div class="row" style="margin-top:12px">
+        <div class="field"><label for="social">社会保険料（年額）</label><input type="number" id="social" min="0" placeholder="空欄なら自動で見積もり">
+          <div class="hint">円単位。源泉徴収票の「社会保険料等の金額」</div></div>
+        <div class="field"><label for="ideco">iDeCoなどの掛金（年額）</label><input type="number" id="ideco" min="0" value="0">
+          <div class="hint">円単位</div></div>
+      </div>
+    </details>
+    <button id="calc">上限額を計算する</button>
+  </div>
+
+  <div class="card" id="result" hidden></div>
+
+  <div class="ad">広告スペース</div>
+
+  <div class="card">
+    <h2>ふるさと納税のツール</h2>
+    <ul class="tools" id="toolList"></ul>
+  </div>
+
+  <div class="card faq">
+    <h2>ふるさと納税の上限額についてよくある質問</h2>
+    <h3>上限額を超えて寄付するとどうなる？</h3>
+    <p>上限を超えた分は税金から差し引かれず、ただの寄付（自己負担）になります。損をしないためには、計算した上限額より少し余裕をもって寄付するのが安心です。</p>
+    <h3>2026年は上限額が変わる？</h3>
+    <p>2026年分は所得税の基礎控除などが引き上げられ、所得税が軽くなります。ふるさと納税の上限額は「所得税率」が低いほど小さくなる仕組みのため、年収によっては去年より上限額が少し下がる場合があります。去年と同じ金額を寄付する前に、計算し直すのがおすすめです。</p>
+    <h3>住宅ローン控除や医療費控除を受けている場合は？</h3>
+    <p>住宅ローン控除を受けていると、所得税で引ききれない分が住民税から差し引かれるため、上限額が少し下がることがあります。医療費控除などを確定申告で受ける場合も上限額が変わります。このツールの結果より少なめに寄付するのが安全です。</p>
+    <h3>いつまでに寄付すればいい？</h3>
+    <p>2026年分として控除されるのは、2026年12月31日までに決済が完了した寄付です。年末は混み合い、支払い方法によっては翌年扱いになることもあるので、早めの寄付がおすすめです。</p>
+  </div>
+
+  <div class="card" id="related" hidden></div>
+
+  <footer>令和8年（2026年）分の所得税・令和9年度分の住民税をもとにした、会社員（給与収入のみ）の場合の概算です。実際の上限額は、ほかの控除や住んでいる地域によって変わることがあります。</footer>
+</div>
+
+<script src="assets/site.js"></script>
+<script src="assets/furusato.js"></script>
+<script>
+document.getElementById("toolList").innerHTML = TOOLS.filter(t => t.path !== "/furusato/")
+  .map(t => `<li><a href="${t.path}"><b>${t.name}</b><span>${t.desc}</span></a></li>`).join("");
+const num = id => Math.max(0, Number(document.getElementById(id).value) || 0);
+
+function calc() {
+  const out = document.getElementById("result");
+  out.hidden = false;
+  const annual = num("annual") * 10000;
+  if (!annual) { out.innerHTML = '<p class="err">年収を入力してください。</p>'; return; }
+  const r = furusatoLimit({
+    annual, over40: document.getElementById("age").value === "40",
+    spouse: document.getElementById("spouse").checked,
+    general: Math.floor(num("general")), tokutei: Math.floor(num("tokutei")),
+    social: num("social"), ideco: num("ideco"),
+  });
+  if (!r.limit) {
+    out.innerHTML = '<p class="err">この条件では住民税（所得割）がかからないため、ふるさと納税をしても税金は戻りません（寄付額はそのまま自己負担になります）。</p>';
+    return;
+  }
+  const safe = Math.floor(r.limit * 0.9 / 1000) * 1000;
+  try { localStorage.setItem("furusato-limit", String(r.limit)); } catch {}
+  out.innerHTML = `
+    <div class="big">
+      <div class="stat good"><div class="k">寄付の上限額（目安）</div><div class="v">${yen(r.limit)}</div></div>
+      <div class="stat"><div class="k">余裕をもった目安（9割）</div><div class="v">${yen(safe)}</div></div>
+      <div class="stat"><div class="k">自己負担</div><div class="v">2,000円</div></div>
+    </div>
+    <table class="info">
+      <tr><td>社会保険料（${num("social") ? "入力値" : "目安"}）</td><td class="num">${yen(r.social)}</td></tr>
+      <tr><td>所得税の課税所得</td><td class="num">${yen(r.taxableIT)}</td></tr>
+      <tr><td>所得税率</td><td class="num">${Math.round(r.rate * 100)}%</td></tr>
+      <tr><td>住民税の課税所得</td><td class="num">${yen(r.taxableRT)}</td></tr>
+      <tr><td>住民税（所得割）</td><td class="num">${yen(r.shotokuwari)}</td></tr>
+    </table>
+    <p class="note">上限額ぴったりまで寄付すると、年収の見込みがずれたときに自己負担が増えることがあります。「余裕をもった目安」くらいまでにしておくと安心です。</p>
+    <p class="note">寄付したら → <a href="/furusato/kanri/">寄付の管理・残り枠チェック</a>（この上限額が自動で入ります） ／ 手続きは → <a href="/furusato/onestop/">ワンストップ特例の判定</a></p>`;
+  out.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+document.getElementById("calc").addEventListener("click", calc);
+</script>
+</body>
+</html>

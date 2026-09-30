@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ふるさと納税 上限額 早見表【2026年】｜年収・家族構成別の目安</title>
+<meta name="description" content="ふるさと納税で自己負担2,000円に収まる寄付上限額の早見表（2026年版）。年収300万〜2,500万円、独身・夫婦・子どもあり（高校生・大学生）など家族構成別に一覧で確認できます。">
+<link rel="canonical" href="https://harryquad.github.io/furusato/hayami/">
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+.scroll{overflow-x:auto}
+table.hayami{border-collapse:collapse;font-size:.85rem;min-width:720px;width:100%}
+table.hayami th,table.hayami td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+table.hayami th{color:var(--muted);font-weight:500;font-size:.78rem;white-space:normal;vertical-align:bottom}
+table.hayami th:first-child,table.hayami td:first-child{text-align:left;position:sticky;left:0;background:var(--card)}
+table.hayami tr:hover td{background:var(--accent-soft)}
+</style>
+</head>
+<body>
+<header class="site-header"><div><a href="/furusato/">ふるさと納税 かんたん計算</a></div></header>
+<div class="wrap">
+  <h1>ふるさと納税 上限額 早見表（2026年）</h1>
+  <p class="lead">年収と家族構成ごとの、<strong>自己負担2,000円で寄付できる上限額の目安</strong>です。2026年（令和8年）の税制改正に対応しています。あなたの条件でぴったり計算したい場合は <a href="/furusato/">上限額 計算シミュレーション</a> をお使いください。</p>
+
+  <div class="card">
+    <div class="field" style="max-width:260px">
+      <label for="age">年齢</label>
+      <select id="age"><option value="u40">39歳以下</option><option value="40">40〜64歳</option></select>
+    </div>
+    <div class="scroll"><table class="hayami" id="table"></table></div>
+    <p class="note">「共働き」は配偶者控除の対象外の配偶者（自分で収入がある配偶者）、「夫婦」は配偶者控除の対象になる配偶者がいる場合です。「高校生」は16〜18歳、「大学生」は19〜22歳の扶養している子どもを表します。15歳以下の子どもは上限額に影響しないので、「独身」や「共働き」と同じ列を見てください。</p>
+  </div>
+
+  <div class="ad">広告スペース</div>
+
+  <div class="card faq">
+    <h2>早見表の見方</h2>
+    <h3>表の金額ちょうどまで寄付していい？</h3>
+    <p>表は目安なので、実際の上限額は社会保険料や、ほかの控除（医療費控除・住宅ローン控除など）によって少し変わります。表の金額の9割程度にとどめておくと安心です。</p>
+    <h3>年収はいつの金額？</h3>
+    <p>寄付する年（2026年に寄付するなら2026年1〜12月）の年収です。まだ確定していない場合は、見込み額で考えます。ボーナスも含めた額面の金額です。</p>
+    <h3>去年の早見表と金額が違うのはなぜ？</h3>
+    <p>2026年分から所得税の基礎控除・給与所得控除が引き上げられ、所得税率が下がる人がいるためです。上限額は所得税率が低いほど小さくなる計算なので、去年より少し下がる場合があります。</p>
+  </div>
+
+  <div class="card" id="related"></div>
+
+  <footer>令和8年（2026年）分の所得税・令和9年度分の住民税をもとにした、会社員（給与収入のみ）の場合の概算です。社会保険料は年収の約15%（40〜64歳は約15.8%）として計算し、1,000円未満を切り捨てています。</footer>
+</div>
+
+<script src="../assets/site.js"></script>
+<script src="../assets/furusato.js"></script>
+<script>
+const PATTERNS = [
+  ["独身・共働き", { spouse: false, general: 0, tokutei: 0 }],
+  ["夫婦", { spouse: true, general: 0, tokutei: 0 }],
+  ["共働き＋子1人（高校生）", { spouse: false, general: 1, tokutei: 0 }],
+  ["共働き＋子1人（大学生）", { spouse: false, general: 0, tokutei: 1 }],
+  ["夫婦＋子1人（高校生）", { spouse: true, general: 1, tokutei: 0 }],
+  ["共働き＋子2人（大学生と高校生）", { spouse: false, general: 1, tokutei: 1 }],
+  ["夫婦＋子2人（大学生と高校生）", { spouse: true, general: 1, tokutei: 1 }],
+];
+const INCOMES = [300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1100, 1200, 1300, 1400, 1500, 1700, 2000, 2500];
+
+function render() {
+  const over40 = document.getElementById("age").value === "40";
+  const head = `<tr><th>年収</th>${PATTERNS.map(p => `<th>${p[0]}</th>`).join("")}</tr>`;
+  const rows = INCOMES.map(m => `<tr><td>${m}万円</td>${PATTERNS.map(([, f]) => {
+    const { limit } = furusatoLimit({ annual: m * 10000, over40, social: 0, ideco: 0, ...f });
+    return `<td>${limit ? (Math.floor(limit / 1000) * 1000).toLocaleString("ja-JP") + "円" : "—"}</td>`;
+  }).join("")}</tr>`);
+  document.getElementById("table").innerHTML = head + rows.join("");
+}
+document.getElementById("age").addEventListener("change", render);
+render();
+</script>
+</body>
+</html>
