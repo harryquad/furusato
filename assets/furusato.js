@@ -7,7 +7,7 @@ const BRACKETS = [
 ];
 const floor1000 = n => Math.max(0, Math.floor(n / 1000) * 1000);
 
-// 給与所得控除（所得税は令和8年分の特例で最低74万円、住民税は65万円）
+// 給与所得控除（令和8年分の所得税・令和9年度分の住民税とも最低74万円）
 function salaryDeduction(a, min) {
   let d;
   if (a <= 3600000) d = a * 0.3 + 80000;
@@ -73,7 +73,7 @@ function furusatoLimitDetail(p) {
   // 給与と年金の両方がある場合の所得金額調整控除
   const adjustFor = salaryIncome => (salaryIncome > 0 && pen > 0) ? Math.max(0, Math.min(salaryIncome, 100000) + Math.min(pen, 100000) - 100000) : 0;
   const salIT = salary - salaryDeduction(salary, 740000);
-  const salRT = salary - salaryDeduction(salary, 650000);
+  const salRT = salary - salaryDeduction(salary, 740000);
   const incomeIT = Math.max(0, salIT - adjustFor(salIT) + pen + extra);
   const incomeRT = Math.max(0, salRT - adjustFor(salRT) + pen + extra);
   const social = p.social > 0 ? p.social : (salary ? estimateSocial(salary, p.over40) : 0);
@@ -94,7 +94,7 @@ function furusatoLimit(p) {
   return limitFromIncome({
     ...p, social,
     incomeIT: p.annual - salaryDeduction(p.annual, 740000),
-    incomeRT: p.annual - salaryDeduction(p.annual, 650000),
+    incomeRT: p.annual - salaryDeduction(p.annual, 740000),
   });
 }
 
