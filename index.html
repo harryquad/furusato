@@ -58,7 +58,7 @@
 
   <div class="card" id="result" hidden></div>
 
-  <!--sw-ad--><div class="ad on"><p style="margin:0 0 4px;font-size:.75rem;color:var(--muted);font-weight:700">PR（広告）</p><p style="margin:0 0 6px;font-weight:700">ふるさと納税の寄付先をさがす</p><ul style="margin:0;padding-left:1.2em"><li style="margin:4px 0"><a href="https://px.a8.net/svt/ejp?a8mat=4BEK9C+CAYIUQ+54OC+5YJRM" rel="nofollow sponsored">au PAY ふるさと納税</a><img border="0" width="1" height="1" src="https://www10.a8.net/0.gif?a8mat=4BEK9C+CAYIUQ+54OC+5YJRM" alt=""><br><small style="color:var(--muted)">寄付額の1％分のPontaポイント還元（広告主の案内による）</small></li></ul><p style="margin:8px 0 0;font-size:.78rem;color:var(--muted)">上限額を超えた寄付は自己負担になります。寄付の前に、このサイトで上限額を確認しておきましょう。</p></div><!--/sw-ad-->
+  <!--sw-ad--><div class="ad on"><p style="margin:0 0 4px;font-size:.75rem;color:var(--muted);font-weight:700">PR（広告）</p><p style="margin:0 0 6px;font-weight:700">ふるさと納税の寄付先をさがす</p><ul style="margin:0;padding-left:1.2em"><li style="margin:4px 0"><a href="https://px.a8.net/svt/ejp?a8mat=4BEK9C+CAYIUQ+54OC+5YJRM&id1=furusato&id2=top" rel="nofollow sponsored">au PAY ふるさと納税</a><img border="0" width="1" height="1" src="https://www10.a8.net/0.gif?a8mat=4BEK9C+CAYIUQ+54OC+5YJRM" alt=""><br><small style="color:var(--muted)">寄付額の1％分のPontaポイント還元（広告主の案内による）</small></li></ul><p style="margin:8px 0 0;font-size:.78rem;color:var(--muted)">上限額を超えた寄付は自己負担になります。寄付の前に、このサイトで上限額を確認しておきましょう。</p></div><!--/sw-ad-->
 
   <div class="card">
     <h2>ふるさと納税のツール</h2>
@@ -123,7 +123,8 @@ function calc() {
       <tr><td>住民税（所得割）</td><td class="num">${yen(r.shotokuwari)}</td></tr>
     </table>
     <p class="note">上限額ぴったりまで寄付すると、年収の見込みがずれたときに自己負担が増えることがあります。「余裕をもった目安」くらいまでにしておくと安心です。</p>
-    <p class="note">寄付したら → <a href="/furusato/kanri/">寄付の管理・残り枠チェック</a>（この上限額が自動で入ります） ／ 手続きは → <a href="/furusato/onestop/">ワンストップ特例の判定</a></p>`;
+    <p class="note">寄付したら → <a href="/furusato/kanri/">寄付の管理・残り枠チェック</a>（この上限額が自動で入ります） ／ 手続きは → <a href="/furusato/onestop/">ワンストップ特例の判定</a></p>
+    <div class="ad on" style="margin-top:14px"><p style="margin:0 0 4px;font-size:.75rem;color:var(--muted);font-weight:700">PR（広告）</p><p style="margin:0 0 6px;font-weight:700">この上限額の範囲で返礼品を探す（目安：合計${yen(safe)}まで）</p><ul style="margin:0;padding-left:1.2em"><li style="margin:4px 0"><a href="https://rpx.a8.net/svt/ejp?a8mat=4BEK9C+C2MGDU+2HOM+BW8O1&rakuten=y&a8ejpredirect=http%3A%2F%2Fhb.afl.rakuten.co.jp%2Fhgc%2F0ea62065.34400275.0ea62066.204f04c0%2Fa26101972169_4BEK9C_C2MGDU_2HOM_BW8O1%3Fpc%3Dhttps%253A%252F%252Fevent.rakuten.co.jp%252Ffurusato%252F%26m%3Dhttps%253A%252F%252Fevent.rakuten.co.jp%252Ffurusato%252F" rel="nofollow sponsored">楽天ふるさと納税で返礼品を探す</a><img border="0" width="1" height="1" src="https://www11.a8.net/0.gif?a8mat=4BEK9C+C2MGDU+2HOM+BW8O1" alt=""></li><li style="margin:4px 0"><a href="https://px.a8.net/svt/ejp?a8mat=4BEK9C+CAYIUQ+54OC+5YJRM&id1=furusato&id2=top" rel="nofollow sponsored">au PAY ふるさと納税で返礼品を探す</a><img border="0" width="1" height="1" src="https://www10.a8.net/0.gif?a8mat=4BEK9C+CAYIUQ+54OC+5YJRM" alt=""></li></ul><p style="margin:8px 0 0;font-size:.78rem;color:var(--muted)">複数のサイトで寄付する場合も、上限額は1年間の合計です。寄付した分は「寄付の管理」に記録しておくと、残りの枠がわかります。</p></div>`;
   out.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 document.getElementById("calc").addEventListener("click", calc);
